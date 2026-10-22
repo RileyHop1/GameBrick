@@ -1,0 +1,33 @@
+/*
+ * board.c
+ *
+ *  Created on: Oct 15, 2026
+ *      Author: rileyhopper
+ */
+
+
+#include "board.h"
+
+
+
+static int gpio_button_init(void) {
+
+	return 0;
+}
+
+static int gpio_lcd_init(void) {
+
+	return 0;
+}
+
+static int spi1_lcd_init(void) {
+
+	return 0;
+}
+
+
+int init_board(void) {
+
+	return 0;
+
+}

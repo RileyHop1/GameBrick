@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;GameBrick/Core/Src/board&apos; to &apos;board.c&apos;" description="Rename resource &apos;board&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="Core/Src/board" name="board.c" stamp="1792109670464" updateReferences="true"/>
+</session>

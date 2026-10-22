@@ -1,0 +1,76 @@
+/*
+ * board.c
+ *
+ *  Created on: Oct 15, 2026
+ *      Author: rileyhopper
+ */
+
+
+#include "board.h"
+
+
+
+static void gpio_button_init(void) {
+
+	//Enable the clocking for GPIO A and B
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+
+	GPIOA->MODER &= ~(
+			(3U << (1 * 2)) |
+			(3U << (2 * 2)) |
+			(3U << (3 * 2))
+	);
+
+	GPIOB->MODER &= ~(
+			(3U << (0 * 2)) |
+			(3U << (1 * 2)) |
+			(3U << (2 * 2))
+	);
+
+	GPIOA->PUPDR &= ~(
+			(3U << (1 * 2)) |
+			(3U << (2 * 2)) |
+			(3U << (3 * 2))
+	);
+
+	GPIOA->PUPDR |= (
+			(1U << (1 * 2)) |
+			(1U << (2 * 2)) |
+			(1U << (3 * 2))
+	);
+
+	GPIOB->PUPDR &= ~(
+			(3U << (0 * 2)) |
+			(3U << (1 * 2)) |
+			(3U << (2 * 2))
+	);
+
+	GPIOB->PUPDR |= (
+			(1U << (0 * 2)) |
+			(1U << (1 * 2)) |
+			(1U << (2 * 2))
+	);
+
+
+}
+
+static void gpio_lcd_init(void) {
+
+}
+
+static void spi1_lcd_init(void) {
+
+}
+
+
+int init_board(void) {
+
+	gpio_button_init();
+	gpio_lcd_init();
+	spi1_lcd_init();
+
+
+	return 0;
+
+}

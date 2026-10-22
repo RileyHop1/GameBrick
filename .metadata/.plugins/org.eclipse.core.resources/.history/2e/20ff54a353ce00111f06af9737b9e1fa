@@ -1,0 +1,211 @@
+/*
+ * board.c
+ *
+ *  Created on: Oct 15, 2026
+ *      Author: rileyhopper
+ */
+
+
+#include "board.h"
+
+/* Button pins */
+#define BTN_PA1_PIN        1U
+#define BTN_PA2_PIN        2U
+#define BTN_PA3_PIN        3U
+
+#define BTN_PB0_PIN        0U
+#define BTN_PB1_PIN        1U
+#define BTN_PB2_PIN        2U
+
+/* LCD control pins */
+#define LCD_CS_PIN         4U
+#define LCD_DC_PIN         6U
+#define LCD_RESET_PIN      7U
+
+/* LCD SPI pins*/
+#define LCD_SCK_PIN 	   5U
+#define LCD_MISO_PIN       6U
+#define LCD_MOSI_PIN	   7U
+#define OSPEEDER_FAST      2U
+
+#define SPI_BAUDE_RATE     (3U << 3U)
+
+/* Generic GPIO register fields */
+#define GPIO_MODE_MASK(pin)        (3U << ((pin) * 2U))
+#define GPIO_MODE_OUTPUT(pin)      (1U << ((pin) * 2U))
+#define GPIO_MODE_ALTERNATE(pin)   (2U << ((pin) * 2U))
+#define GPIO_AFR_MASK(pin) 		   (0xFU << ((pin) * 4))
+#define GPIO_PUPD_MASK(pin)        (3U << ((pin) * 2U))
+#define GPIO_PUPD_PULLUP(pin)      (1U << ((pin) * 2U))
+#define GPIO_PIN_SET(pin)          (1U << (pin))
+#define GPIO_AFR_SET(pin)          (5U << ((pin)* 4))
+#define GPIO_OSPEEDER_SET(pin, speed) ((speed) << ((pin) * 2U)
+
+#define BUTTON_GPIOA_MASK ( \
+    GPIO_MODE_MASK(BTN_PA1_PIN) | \
+    GPIO_MODE_MASK(BTN_PA2_PIN) | \
+    GPIO_MODE_MASK(BTN_PA3_PIN) )
+#define BUTTON_GPIOB_MASK ( \
+    GPIO_MODE_MASK(BTN_PB0_PIN) | \
+    GPIO_MODE_MASK(BTN_PB1_PIN) | \
+    GPIO_MODE_MASK(BTN_PB2_PIN) )
+#define BUTTON_GPIOA_PULLUP ( \
+    GPIO_PUPD_PULLUP(BTN_PA1_PIN) | \
+    GPIO_PUPD_PULLUP(BTN_PA2_PIN) | \
+    GPIO_PUPD_PULLUP(BTN_PA3_PIN) )
+#define BUTTON_GPIOB_PULLUP ( \
+    GPIO_PUPD_PULLUP(BTN_PB0_PIN) | \
+    GPIO_PUPD_PULLUP(BTN_PB1_PIN) | \
+    GPIO_PUPD_PULLUP(BTN_PB2_PIN) )
+#define GPIO_MODE_ALTERNATE_MASK ( \
+		GPIO_MODE_MASK(LCD_SCK_PIN) | \
+		GPIO_MODE_MASK(LCD_MISO_PIN) | \
+		GPIO_MODE_MASK(LCD_MOSI_PIN))
+
+#define GPIO_AFR_ALTERNATE_MASK ( \
+		GPIO_AFR_MASK(LCD_SCK_PIN) | \
+		GPIO_AFR_MASK(LCD_MISO_PIN) | \
+		GPIO_AFR_MASK(LCD_MOSI_PIN))
+
+#define GPIO_PUDR_MASK ( \
+		GPIO_AFR_MASK(LCD_SCK_PIN) | \
+		GPIO_AFR_MASK(LCD_MISO_PIN) | \
+		GPIO_AFR_MASK(LCD_MOSI_PIN))
+
+
+#define GPIO_OTYPER_MASK ( \
+		GPIO_PIN_SET(LCD_SCK_PIN) | \
+		GPIO_PIN_SET(LCD_MOSI_PIN))
+
+#define GPIO_OSPEEDER_MASK ( \
+		GPIO_MODE_MASK(LCD_SCK_PIN) | \
+		GPIO_MODE_MASK(LCD_MISO_PIN) | \
+		GPIO_MODE_MASK(LCD_MOSI_PIN))
+
+
+
+
+
+
+
+/**
+ * @brief Initializes the GPIO pins used for button inputs.
+ *
+ * Enables the GPIOA and GPIOB peripheral clocks and configures
+ * PA1-PA3 and PB0-PB2 as digital inputs with internal pull-up
+ * resistors.
+ *
+ * Buttons are active-low:
+ *   - HIGH (1): Button released
+ *   - LOW  (0): Button pressed
+ */
+static void gpio_button_init(void) {
+    GPIOA->MODER &= ~BUTTON_GPIOA_MASK;
+    GPIOB->MODER &= ~BUTTON_GPIOB_MASK;
+
+    GPIOA->PUPDR &= ~BUTTON_GPIOA_MASK;
+    GPIOA->PUPDR |=  BUTTON_GPIOA_PULLUP;
+
+    GPIOB->PUPDR &= ~BUTTON_GPIOB_MASK;
+    GPIOB->PUPDR |=  BUTTON_GPIOB_PULLUP;
+}
+
+/**
+ * @brief Initializes the GPIO pins used for LCD control.
+ *
+ * Configures the LCD control signals as general-purpose outputs:
+ *   - PA4: Chip Select (CS)
+ *   - PB6: Data/Command (D/C)
+ *   - PB7: Hardware Reset (RESET)
+ *
+ * Establishes safe initial states for CS and RESET before
+ * enabling their output drivers.
+ *
+ * This function does not configure the SPI communication pins.
+ *
+ * @note Requires GPIOA and GPIOB peripheral clocks to be enabled.
+ */
+static void gpio_lcd_init(void) {
+    // Establish safe initial states
+    GPIOA->BSRR = GPIO_PIN_SET(LCD_CS_PIN);
+    GPIOB->BSRR = GPIO_PIN_SET(LCD_RESET_PIN);
+
+    // PA4 -> output
+    GPIOA->MODER &= ~GPIO_MODE_MASK(LCD_CS_PIN);
+    GPIOA->MODER |=  GPIO_MODE_OUTPUT(LCD_CS_PIN);
+
+    // PB6/PB7 -> output
+    GPIOB->MODER &= ~(
+        GPIO_MODE_MASK(LCD_DC_PIN) |
+        GPIO_MODE_MASK(LCD_RESET_PIN)
+    );
+
+    GPIOB->MODER |= (
+        GPIO_MODE_OUTPUT(LCD_DC_PIN) |
+        GPIO_MODE_OUTPUT(LCD_RESET_PIN)
+    );
+}
+
+/**
+ * @brief Initializes the SPI1 peripheral for communication.
+ *
+ * Configures the SPI1 communication pins:
+ *   - PA5: SPI Clock (SCK)
+ *   - PA6: Master In Slave Out (MISO)
+ *   - PA7: Master Out Slave In (MOSI)
+ *
+ * Sets the GPIO pins to alternate-function mode (AF5) and
+ * configures SPI1 as the master device, including clock rate,
+ * clock polarity, clock phase, and data format.
+ *
+ * Chip Select (CS) is managed separately through GPIO.
+ *
+ * @note Does not initialize or send commands to the LCD.
+ */
+static void spi1_lcd_init(void) {
+	GPIOA->MODER &= ~GPIO_MODE_ALTERNATE_MASK;
+	GPIOA->OTYPER &= ~GPIO_OTYPER_MASK;
+	GPIOA->OTYPER &= ~GPIO_OSPEEDER_MASK;
+
+	GPIOA->OSPEEDR |= GPIO_OSPEEDR_SET(LCD_SCK_PIN, OSPEEDER_FAST);
+	GPIOA->OSPEEDR |= GPIO_OSPEEDR_SET(LCD_MOSI_PIN, OSPEEDER_FAST);
+
+	GPIOA->MODER |= GPIO_MODE_ALTERNATE(LCD_SCK_PIN);
+	GPIOA->MODER |= GPIO_MODE_ALTERNATE(LCD_MOSI_PIN);
+	GPIOA->MODER |= GPIO_MODE_ALTERNATE(LCD_MISO_PIN);
+
+	GPIOA->AFR[0] &= ~GPIO_AFR_ALTERNATE_MASK;
+
+	GPIOA->AFR[0] |=  GPIO_AFR_SET(LCD_SCK_PIN);
+	GPIOA->AFR[0] |=  GPIO_AFR_SET(LCD_MOSI_PIN);
+	GPIOA->AFR[0] |=  GPIO_AFR_SET(LCD_MISO_PIN);
+
+
+	SPI1->CR1 = 0;
+
+	SPI1->CR1 |= SPI_CR1_MSTR;
+	SPI1->CR1 |= SPI_CR1_SSI;
+	SPI1->CR1 |= SPI_CR1_SSM;
+
+	SPI1->CR1 |= SPI_BAUDE_RATE;
+
+
+
+}
+
+
+int init_board(void) {
+
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN |
+	                RCC_AHB1ENR_GPIOBEN;
+
+	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+
+	gpio_button_init();
+	gpio_lcd_init();
+	spi1_lcd_init();
+
+
+	return 0;
+
+}

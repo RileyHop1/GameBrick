@@ -1,0 +1,31 @@
+13:06:13 **** Incremental Build of configuration Debug for project GameBrick ****
+make -j14 all 
+arm-none-eabi-gcc "../Core/Src/board.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F411xE -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/board.d" -MT"Core/Src/board.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/board.o"
+../Core/Src/board.c: In function 'spi1_lcd_init':
+../Core/Src/board.c:169:71: error: expected ')' before ';' token
+  169 |         GPIOA->OSPEEDR |= GPIO_OSPEEDR_SET(LCD_SCK_PIN, OSPEEDER_FAST);
+      |                                                                       ^
+../Core/Src/board.c:42:38: note: to match this '('
+   42 | #define GPIO_OSPEEDR_SET(pin, speed) ((speed) << ((pin) * 2U)
+      |                                      ^
+../Core/Src/board.c:169:27: note: in expansion of macro 'GPIO_OSPEEDR_SET'
+  169 |         GPIOA->OSPEEDR |= GPIO_OSPEEDR_SET(LCD_SCK_PIN, OSPEEDER_FAST);
+      |                           ^~~~~~~~~~~~~~~~
+../Core/Src/board.c:212:1: error: expected declaration or statement at end of input
+  212 | }
+      | ^
+../Core/Src/board.c: At top level:
+../Core/Src/board.c:165:13: warning: 'spi1_lcd_init' defined but not used [-Wunused-function]
+  165 | static void spi1_lcd_init(void) {
+      |             ^~~~~~~~~~~~~
+../Core/Src/board.c:128:13: warning: 'gpio_lcd_init' defined but not used [-Wunused-function]
+  128 | static void gpio_lcd_init(void) {
+      |             ^~~~~~~~~~~~~
+../Core/Src/board.c:102:13: warning: 'gpio_button_init' defined but not used [-Wunused-function]
+  102 | static void gpio_button_init(void) {
+      |             ^~~~~~~~~~~~~~~~
+make: *** [Core/Src/subdir.mk:37: Core/Src/board.o] Error 1
+"make -j14 all" terminated with exit code 2. Build might be incomplete.
+
+13:06:13 Build Failed. 3 errors, 3 warnings. (took 131ms)
+

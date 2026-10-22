@@ -1,0 +1,39 @@
+/*
+ * board.c
+ *
+ *  Created on: Oct 15, 2026
+ *      Author: rileyhopper
+ */
+
+
+#include "board.h"
+
+
+
+static void gpio_button_init(void) {
+
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+
+
+}
+
+static void gpio_lcd_init(void) {
+
+}
+
+static void spi1_lcd_init(void) {
+
+}
+
+
+int init_board(void) {
+
+	gpio_button_init();
+	gpio_lcd_init();
+	spi1_lcd_init();
+
+
+	return 0;
+
+}

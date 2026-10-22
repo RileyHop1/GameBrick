@@ -16,3 +16,9 @@ of helpful items that will help any curious copy-cats recreate what I have done.
 The micro controller that is use for this project is the NUCLEO-F411RE STM32 Nucleo-64
 A helpfull source that I used for this project is [Documentation](https://www.st.com/en/microcontrollers-microprocessors/stm32f411/documentation.html).
 
+
+### LCD 
+
+The LCD that is being used for this project is 
+
+
